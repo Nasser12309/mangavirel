@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض محتوى الفصل ديناميكيًا</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #390311;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .top-bar {
+            background-color: #982F1F;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .back-arrow-group {
+            display: flex;
+            gap: 10px;
+            order: 1;
+        }
+
+        .back-arrow {
+            font-size: 24px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            order: 2;
+        }
+
+        .nav-button {
+            background-color: transparent;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 5px 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .nav-button:hover {
+            background-color: rgba(255, 0, 0, 0.2);
+        }
+        .nav-button:disabled {
+             opacity: 0.5;
+             cursor: not-allowed;
+        }
+
+        .pdf-viewer-container {
+            flex-grow: 1;
+            margin: 1px;
+            border: 2px;
+            overflow: auto;
+            background-color: #121212;
+        }
+
+        .pdf-canvas-container {
+            text-align: center;
+            padding: 0;
+        }
+
+        .teil {
+            text-align: center;
+            height: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .teil h3 {
+            margin: 0;
+            color: #fff;
+            padding-top: 15px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="back-arrow-group">
+        <i id="back-to-details" class="fas fa-arrow-right back-arrow"></i>
+        <i id="home-button" class="fas fa-home back-arrow"></i>
+          <div class="teil">
+       <h3 id="chapter-title">جاري التحميل...</h3>
+    </div>
+    </div>
+
+
+    <div class="button-container">
+        <button id="next-chapter-btn" class="nav-button">الفصل التالي</button>
+        <button id="prev-chapter-btn" class="nav-button">الفصل السابق</button>
+    </div>
+</div>
+
+
+    <div id="pdf-container" class="pdf-viewer-container">
+        <div id="canvas-wrapper" class="pdf-canvas-container">
+            <p style="color: #fff; padding-top: 50px;">جاري تحميل محتوى الفصل...</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.15.349/pdf.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.15.349/pdf.worker.js';
+
+        function getProjectData(id) {
+            if (id === 'Nano-Machine') {
+                 return {
+                    title: 'نانو ماشين (المانهوا)',
+                    totalChapters: 6,
+                    chapterTitles: ['الفصل 1', 'الفصل 2', 'الفصل 3', 'الفصل 4', 'الفصل 5', 'الفصل 6']
+                 };
+            }
+            if (id === 'Demon-Slayer') { // تم تعديل الحالة لتطابق الكود في show_details.html
+                 return {
+                    title: 'قاتل الشياطين (المانجا)',
+                    totalChapters: 100,
+                    chapterTitles: Array.from({ length: 100 }, (_, i) => `الفصل ${i + 1}`)
+                 };
+            }
+            // إضافة شرط للتعرف على البيانات عند عدم إرسالها بالكامل
+            if (id) {
+                return {
+                    title: id.replace(/-/g, ' '), // عنوان افتراضي
+                    totalChapters: 100, // عدد فصول افتراضي كبير
+                    chapterTitles: Array.from({ length: 100 }, (_, i) => `الفصل ${i + 1}`)
+                };
+            }
+            return {
+                title: 'محتوى غير معروف',
+                totalChapters: 1,
+                chapterTitles: ['الفصل 1']
+            };
+        }
+
+        function getUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            const chapterNumber = parseInt(urlParams.get('chapter'));
+
+            return {
+                id: id,
+                chapter: !isNaN(chapterNumber) && chapterNumber > 0 ? chapterNumber : 1
+            };
+        }
+
+        const { id: currentProjectId, chapter: currentChapterNumber } = getUrlParams();
+        const projectData = getProjectData(currentProjectId);
+        let currentChapterIndex = currentChapterNumber - 1;
+
+
+        function getPdfPath(projectId, chapterNum) {
+            // منطق افتراضي لتحديد المسار
+            const baseDir = (projectId.includes('Demon-Slayer') || projectId.includes('Slam-Dunk')) ? 'Manga_Files' : 'Manhua_Files';
+            const projectFolder = projectId;
+            const fileName = `${projectId}_ch${chapterNum}.pdf`;
+
+            return `/${baseDir}/${projectFolder}/${fileName}`;
+        }
+
+        const container = document.getElementById('canvas-wrapper');
+        const nextButton = document.getElementById('next-chapter-btn');
+        const prevButton = document.getElementById('prev-chapter-btn');
+        const chapterTitleElement = document.getElementById('chapter-title');
+        const backToDetailsButton = document.getElementById('back-to-details');
+        const homeButton = document.getElementById('home-button');
+
+
+        function updateChapterTitle() {
+            if (currentChapterIndex >= 0 && currentChapterIndex < projectData.chapterTitles.length) {
+                chapterTitleElement.innerText = `${projectData.title} - ${projectData.chapterTitles[currentChapterIndex]}`;
+            } else {
+                chapterTitleElement.innerText = projectData.title;
+            }
+        }
+
+        // ===============================================
+        // 1. الدالة الجديدة لحفظ حالة الإكمال
+        // (مكررة من show_details لضمان الاستقلالية في ملف القارئ)
+        // ===============================================
+        function markChapterAsCompleted(contentId, chapterNumber) {
+            let completedChapters = JSON.parse(localStorage.getItem('completedChapters')) || {};
+            const key = `${contentId}-${chapterNumber}`;
+            
+            // وضع علامة الإكمال
+            completedChapters[key] = true; 
+            
+            localStorage.setItem('completedChapters', JSON.stringify(completedChapters));
+            console.log(`تم حفظ إكمال الفصل ${chapterNumber} للمحتوى ${contentId}.`);
+        }
+        // ===============================================
+
+
+        function renderPdf() {
+            updateChapterTitle();
+            updateButtonState();
+
+            const chapterNumToRender = currentChapterIndex + 1;
+            const pdfUrl = getPdfPath(currentProjectId, chapterNumToRender);
+
+            pdfjsLib.getDocument(pdfUrl).promise.then(function(pdf) {
+                container.innerHTML = '';
+
+                const pdfContainer = document.getElementById('pdf-container');
+                const containerWidth = pdfContainer.clientWidth;
+
+                const outputScale = window.devicePixelRatio || 1;
+
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    pdf.getPage(pageNum).then(function(page) {
+
+                        const viewport = page.getViewport({ scale: 1 });
+
+                        const PADDING_MARGIN = 30;
+                        const desiredWidth = containerWidth - PADDING_MARGIN;
+
+                        const baseScale = desiredWidth / viewport.width;
+                        const finalScale = baseScale * outputScale;
+
+                        const scaledViewport = page.getViewport({ scale: finalScale });
+
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+
+                        canvas.height = scaledViewport.height;
+                        canvas.width = scaledViewport.width;
+
+                        canvas.style.width = (scaledViewport.width / outputScale) + 'px';
+                        canvas.style.height = (scaledViewport.height / outputScale) + 'px';
+
+                        canvas.style.margin = '15px auto';
+                        canvas.style.display = 'block';
+                        canvas.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.5)';
+
+                        const renderContext = {
+                            canvasContext: context,
+                            viewport: scaledViewport
+                        };
+
+                        page.render(renderContext);
+                        container.appendChild(canvas);
+                    });
+                }
+            }).catch(function(error) {
+                container.innerHTML = `<p style="color: red; padding-top: 50px;">خطأ في تحميل محتوى الفصل (${chapterNumToRender}) : تأكد من وجود ملف PDF في المسار الصحيح (${pdfUrl}).</p>`;
+                console.error('PDF loading error:', error);
+                chapterTitleElement.innerText = projectData.title + ' (خطأ في التحميل)';
+            });
+        }
+
+        function updateButtonState() {
+            prevButton.disabled = (currentChapterIndex <= 0);
+            nextButton.disabled = (currentChapterIndex >= projectData.totalChapters - 1);
+
+            const newUrl = `${window.location.pathname}?id=${currentProjectId}&chapter=${currentChapterIndex + 1}`;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+        }
+
+        function handleBackToDetails() {
+            // حفظ إكمال الفصل الحالي قبل العودة لصفحة التفاصيل
+            markChapterAsCompleted(currentProjectId, currentChapterIndex + 1);
+            window.location.href = `show_details.html?id=${currentProjectId}`;
+        }
+        
+        // 3. تعديل معالج حدث العودة لصفحة التفاصيل
+        backToDetailsButton.addEventListener('click', handleBackToDetails);
+
+        homeButton.addEventListener('click', function() {
+            // من الجيد أيضاً حفظ الإكمال عند الذهاب للصفحة الرئيسية
+            markChapterAsCompleted(currentProjectId, currentChapterIndex + 1);
+            window.location.href = 'index.html';
+        });
+
+        // 2. تعديل معالج حدث الفصل التالي (لحفظ إكمال الفصل السابق)
+        nextButton.addEventListener('click', function() {
+            if (currentChapterIndex < projectData.totalChapters - 1) {
+                // حفظ الفصل الذي تم الانتهاء منه الآن
+                markChapterAsCompleted(currentProjectId, currentChapterIndex + 1);
+                
+                currentChapterIndex++;
+                renderPdf();
+            }
+        });
+
+        prevButton.addEventListener('click', function() {
+            if (currentChapterIndex > 0) {
+                currentChapterIndex--;
+                renderPdf();
+            }
+        });
+
+        renderPdf();
+    </script>
+</body>
+</html>
