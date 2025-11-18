@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">تحميل بيانات الكاتب...</title>
+    <style>
+        /*
+        إعدادات عامة للهيكل والخطوط
+        */
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /*
+        قسم الصورة والعنوان (الهيدر)
+        */
+        .header-section {
+            position: relative;
+            /* تم تغيير ارتفاع الهيدر ليظهر صورة الكاتب بشكل أفضل */
+            height: 40vh; 
+            background-image: url('default_bg.png'); /* خلفية عامة */
+            background-size: cover;
+            background-position: center top;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* حاوية شريط التنقل العلوي (للزر الرجوع) */
+        .top-nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            display: flex;
+            justify-content: flex-start; 
+            align-items: center;
+            padding: 0 15px;
+            z-index: 10;
+        }
+
+        /* زر الرجوع (سهم) - شكل السهم المحسن */
+        .back-button {
+            color: #fff; 
+            font-size: 3em; 
+            font-weight: 900; 
+            text-decoration: none;
+            cursor: pointer;
+            padding: 2px;
+            line-height: 0.5; 
+            display: inline-block;
+            transform: scaleX(0.8); 
+        }
+        
+        /* تدرج مظلم في الأسفل لتحسين وضوح النص */
+        .header-section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 70%);
+            z-index: 1;
+        }
+
+        /* حاوية معلومات الكاتب */
+        .author-details-container {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end; /* محاذاة لليمين */
+            position: relative;
+            z-index: 2;
+            margin-top: -50px; /* لرفع الجزء العلوي من البطاقة فوق التدرج */
+        }
+        
+        /* صورة الكاتب الشخصية */
+        #authorAvatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            background-color: #333;
+            object-fit: cover;
+            flex-shrink: 0;
+            margin-inline-end: 20px;
+            margin-inline-start: 15px; /* مسافة عن الحافة اليسرى */
+        }
+
+        /* معلومات النص */
+        .text-info {
+            text-align: right;
+            margin-top: 10px;
+            flex-grow: 1;
+        }
+        
+        #authorName {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #fff;
+            margin: 0;
+        }
+        
+        #authorRole {
+            font-size: 1.2em;
+            color: #ccc;
+            margin-top: 5px;
+        }
+        
+        /*
+        قسم البطاقات (الأعمال)
+        */
+        .content-section {
+            padding: 20px 0;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            margin-right: 20px;
+            text-align: right;
+        }
+
+        /* حاوية التمرير الأفقي */
+        .card-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding-right: 20px;
+            padding-left: 20px;
+            padding-bottom: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* إخفاء شريط التمرير */
+        .card-container::-webkit-scrollbar { display: none; }
+        .card-container { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* تصميم البطاقة (بوستر فيلم فقط) */
+        .card {
+            flex: 0 0 auto;
+            width: 120px; 
+            height: 180px; 
+            background-color: #222; 
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+            display: block; /* لجعل البطاقة قابلة للنقر */
+        }
+
+        .card:hover {
+            transform: scale(1.03);
+        }
+
+        /* الصورة تملأ البطاقة بالكامل */
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="top-nav">
+        <a href="index.html" class="back-button">&#8594;</a> 
+    </div>
+
+    <div class="header-section">
+        <div class="author-details-container">
+            <img id="authorAvatar" src="default_avatar.png" alt="صورة الكاتب">
+            <div class="text-info">
+                <h1 id="authorName"></h1>
+                <p id="authorRole"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-section">
+        <h2 class="section-title">أعمال الكاتب</h2>
+
+        <div class="card-container" id="worksContainer">
+            </div>
+    </div>
+
+<script>
+    // **قاعدة بيانات المؤلفين (يمكن نقلها إلى ملف JS منفصل في مشروع أكبر)**
+    const authorsData = {
+        'gegeAkutami': {
+            name: 'Gege Akutami',
+            role: 'كاتب ورسام مانجا (Jujutsu Kaisen)',
+            avatar: 'avatar1.png', 
+            background: 'gege_bg.png', // صورة خلفية خاصة (اختياري)
+            works: [
+                { title: 'Jujutsu Kaisen', image: 'manhua2.png', link: 'show_details.html?id=jujutsu' },
+                { title: 'عمل آخر 1', image: 'work2_gege.png', link: 'show_details.html?id=work_g1' },
+                { title: 'عمل آخر 2', image: 'work3_gege.png', link: 'show_details.html?id=work_g2' },
+                { title: 'عمل 4', image: 'work4_gege.png', link: 'show_details.html?id=work_g3' },
+            ]
+        },
+        'kazuyaMinekura': {
+            name: 'Kazuya Minekura',
+            role: 'كاتبة ورسامة مانجا (Saiyuki)',
+            avatar: 'kazuya_avatar.png',
+            background: 'kazuya_bg.png',
+            works: [
+                { title: 'Saiyuki', image: 'work1_kazuya.png', link: 'show_details.html?id=saiyuki' },
+                { title: 'Wild Adapter', image: 'work2_kazuya.png', link: 'show_details.html?id=wild' },
+                { title: 'عمل 3', image: 'work3_kazuya.png', link: 'show_details.html?id=work_k1' },
+            ]
+        },
+        // **أضف المزيد من بيانات المؤلفين هنا...**
+        'EiichiroOda': {
+            name: 'Eiichiro Oda',
+            role: 'كاتب ورسام مانجا (One Piece)',
+            avatar: 'oda_avatar.png',
+            background: 'oda_bg.png',
+            works: [
+                { title: 'One Piece', image: 'onepiece_poster.png', link: 'show_details.html?id=onepiece' },
+                // ... المزيد من الأعمال
+            ]
+        }
+    };
+
+
+    function loadAuthorDetails() {
+        // 1. استخراج المُعرِّف (ID) من الرابط
+        const urlParams = new URLSearchParams(window.location.search);
+        const authorId = urlParams.get('id');
+
+        // 2. التحقق من وجود المُعرِّف والبيانات
+        const author = authorsData[authorId];
+
+        if (!author) {
+            // التعامل مع حالة عدم العثور على الكاتب
+            document.getElementById('authorName').textContent = 'عفواً، لم يتم العثور على الكاتب';
+            document.getElementById('authorRole').textContent = 'يرجى التأكد من الرابط.';
+            document.getElementById('pageTitle').textContent = 'كاتب غير موجود';
+            document.getElementById('authorAvatar').src = 'default_error_avatar.png';
+            document.querySelector('.header-section').style.backgroundImage = 'url("error_bg.png")';
+            return;
+        }
+
+        // 3. تحديث عناصر HTML بالبيانات
+        document.getElementById('pageTitle').textContent = `أعمال الكاتب: ${author.name}`;
+        document.getElementById('authorName').textContent = author.name;
+        document.getElementById('authorRole').textContent = author.role;
+        document.getElementById('authorAvatar').src = author.avatar;
+        
+        // تحديث الخلفية إذا كانت موجودة
+        if (author.background) {
+             document.querySelector('.header-section').style.backgroundImage = `url('${author.background}')`;
+        }
+
+        // 4. إنشاء بطاقات الأعمال ديناميكياً
+        const worksContainer = document.getElementById('worksContainer');
+        worksContainer.innerHTML = ''; // تفريغ المحتوى القديم
+
+        author.works.forEach(work => {
+            const cardLink = document.createElement('a');
+            cardLink.href = work.link; // رابط التوجيه لصفحة العمل
+            cardLink.classList.add('card');
+            
+            const cardImage = document.createElement('img');
+            cardImage.src = work.image;
+            cardImage.alt = work.title;
+
+            cardLink.appendChild(cardImage);
+            worksContainer.appendChild(cardLink);
+        });
+    }
+
+    // تشغيل الدالة عند تحميل الصفحة
+    window.onload = loadAuthorDetails;
+</script>
+
+</body>
+</html>

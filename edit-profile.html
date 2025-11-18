@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تعديل الملف الشخصي</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --primary-color: #ff3d00;
+    --background-dark: #000000;
+    --input-background: #1e1e1e;
+    --text-active: #fff;
+    --text-secondary: #888;
+    --link-color: #3897f0;
+    --border-color: #333;
+    --error-color: #ff4444;
+    --success-color: #4caf50;
+    --modal-bg: #1e1e1e;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #882F2F;
+    color: var(--text-active);
+    text-align: right;
+    direction: rtl;
+    padding-bottom: 100px;
+  }
+
+  .edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    height: 55px;
+    position: relative;
+  }
+
+  .edit-header .title {
+      font-size: 20px;
+      font-weight: bold;
+      
+      margin: 0;
+      align-items: center;
+  }
+
+  .back-arrow {
+      font-size: 24px;
+      color: var(--text-active);
+      text-decoration: none;
+      order: 1;
+      z-index: 10;
+      padding: 5px;
+  }
+
+  .action-button-large[disabled] {
+    background-color: #444;
+    cursor: not-allowed;
+  }
+
+  .profile-photo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0 0 0;
+    margin-bottom: 20px;
+  }
+
+  .avatar-edit-container {
+      position: relative;
+      cursor: pointer;
+      width: 120px;
+      height: 120px;
+  }
+
+  .avatar-edit {
+    width: 120px;
+    height: 120px;
+    background-color: #333;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .avatar-edit i.fa-user {
+      font-size: 70px;
+      color: var(--text-secondary);
+  }
+
+  .avatar-edit img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+  }
+
+  .avatar-edit i.fa-plus {
+      position: absolute;
+      bottom: -5px;
+      left: auto;
+      right: -5px;
+      background-color: var(--text-active);
+      color: var(--background-dark);
+      border-radius: 50%;
+      padding: 6px;
+      font-size: 14px;
+      border: 2px solid var(--background-dark);
+      transform: none;
+      z-index: 20;
+  }
+
+  .avatar-edit i.fa-pencil-alt {
+      display: none;
+  }
+
+  #profile-image-input {
+      display: none;
+  }
+
+  .input-form-group {
+    padding: 0 15px;
+  }
+
+  .floating-label-field {
+    position: relative;
+    background-color: var(--input-background);
+    border-radius: 8px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    margin-bottom: 15px;
+    overflow: hidden;
+  }
+
+  .floating-label-field input,
+  .floating-label-field select,
+  .floating-label-field textarea {
+    flex-grow: 1;
+    background: none;
+    border: none;
+    color: var(--text-active);
+    font-size: 16px;
+    outline: none;
+    text-align: right;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    height: 100%;
+    min-height: 20px;
+  }
+
+  .floating-label-field textarea {
+      padding-top: 5px;
+      padding-bottom: 5px;
+      height: 45px;
+      resize: none;
+  }
+
+  .floating-label-field i.icon-right {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin-inline-end: 10px;
+    align-self: center;
+    padding-top: 0;
+  }
+
+  .validation-message {
+      position: absolute;
+      bottom: 2px;
+      right: 10px;
+      left: 10px;
+      color: var(--error-color);
+      font-size: 10px;
+      display: none;
+      text-align: right;
+      line-height: 1.2;
+      z-index: 1;
+  }
+
+  .floating-label-field input:invalid:not(:placeholder-shown) ~ .validation-message {
+      display: block;
+  }
+
+  .floating-label-field input:invalid:not(:placeholder-shown) {
+      padding-top: 2px;
+      padding-bottom: 2px;
+  }
+
+  .action-button-large {
+    background-color: var(--primary-color);
+    color: var(--text-active);
+    padding: 15px 40px;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 30px 15px 15px 15px;
+    width: calc(100% - 30px);
+    display: block;
+    position: fixed;
+    bottom: 20px;
+    right: 0;
+    left: 0;
+    z-index: 100;
+  }
+
+  .action-button-large:hover:not([disabled]) {
+      background-color: #e63900;
+  }
+</style>
+</head>
+<body>
+
+<div class="edit-header">
+    <span style="visibility: hidden; font-size: 24px;">.</span>
+
+    <span class="title">تعديل الملف الشخصي</span>
+
+    <a href="profile-view.html" class="back-arrow"><i class="fas fa-arrow-left"></i></a>
+</div>
+
+<div class="profile-photo-section">
+    <div class="avatar-edit-container" id="avatar-edit-container">
+        <input type="file" id="profile-image-input" accept="image/*">
+
+        <div class="avatar-edit">
+            <i class="fas fa-user" id="default-icon"></i>
+            <img src="" alt="Profile Image" id="profile-image">
+
+            <i class="fas fa-plus"></i>
+        </div>
+    </div>
+</div>
+
+<form class="input-form-group" id="profile-form">
+
+    <div class="floating-label-field">
+        <i class="fas fa-user icon-right"></i>
+        <input
+            type="text"
+            placeholder="الاسم"
+            name="name"
+            required
+            pattern="^[\u0600-\u06FF\sA-Za-z]+$"
+            title="الاسم يجب أن يحتوي على حروف عربية أو إنجليزية فقط."
+            id="name-input"
+        >
+        <span class="validation-message" id="name-validation-msg">الاسم يجب أن يحتوي على حروف عربية أو إنجليزية فقط.</span>
+    </div>
+
+    <div class="floating-label-field">
+        <i class="fas fa-user icon-right"></i>
+        <input
+            type="text"
+            placeholder="اسم المستخدم"
+            name="username"
+            required
+            pattern="^[A-Za-z0-9]+$"
+            title="اسم المستخدم يجب أن يكون بالإنجليزية وأرقام فقط."
+            id="username-input"
+        >
+        <span class="validation-message" id="username-validation-msg">اسم المستخدم يجب أن يكون بالإنجليزية وأرقام فقط.</span>
+    </div>
+
+    <div class="floating-label-field" style="height: auto;">
+        <i class="fas fa-bars icon-right"></i>
+        <textarea placeholder="النبذة" name="bio" id="bio-input"></textarea>
+    </div>
+
+    <div class="floating-label-field">
+        <i class="fas fa-calendar-alt icon-right"></i>
+        <input
+            type="text"
+            placeholder="تاريخ الميلاد"
+            class="date-input"
+            dir="rtl"
+            onfocus="this.type='date'"
+            onblur="if(!this.value)this.type='text'"
+            name="dob"
+            required
+            id="dob-input"
+        >
+    </div>
+
+    <div class="floating-label-field gender-field">
+        <i class="fas fa-male icon-right"></i>
+        <select name="gender" required id="gender-select">
+            <option value="" disabled selected>الجنس</option>
+            <option value="male" >ذكر</option>
+            <option value="female">أنثى</option>
+        </select>
+    </div>
+
+</form>
+
+<button class="action-button-large" id="save-button" disabled>حفظ</button>
+
+<script>
+    let profileImageBase64 = localStorage.getItem('profileImageBase64') || '';
+
+    const avatarContainer = document.getElementById('avatar-edit-container');
+    const fileInput = document.getElementById('profile-image-input');
+    const profileImage = document.getElementById('profile-image');
+    const defaultIcon = document.getElementById('default-icon');
+    const form = document.getElementById('profile-form');
+    const saveButton = document.getElementById('save-button');
+    const requiredInputs = form.querySelectorAll('[required]');
+
+    function loadSavedData() {
+        const savedData = JSON.parse(localStorage.getItem('profileData'));
+        if (savedData) {
+            document.getElementById('name-input').value = savedData.name || '';
+            document.getElementById('username-input').value = savedData.username || '';
+            document.getElementById('bio-input').value = savedData.bio || '';
+            document.getElementById('dob-input').value = savedData.dob || '';
+            document.getElementById('gender-select').value = savedData.gender || '';
+
+            if (savedData.image) {
+                profileImageBase64 = savedData.image;
+                profileImage.src = profileImageBase64;
+                profileImage.style.display = 'block';
+                defaultIcon.style.display = 'none';
+            } else {
+                 profileImage.style.display = 'none';
+                 defaultIcon.style.display = 'block';
+            }
+
+            checkFormValidity();
+        }
+    }
+
+    avatarContainer.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profileImageBase64 = e.target.result;
+                profileImage.src = profileImageBase64;
+                profileImage.style.display = 'block';
+                defaultIcon.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function checkFormValidity() {
+        const isFormValid = form.checkValidity();
+        saveButton.disabled = !isFormValid;
+    }
+
+    requiredInputs.forEach(input => {
+        input.addEventListener('input', checkFormValidity);
+        if (input.name === 'gender' || input.name === 'dob') {
+            input.addEventListener('change', checkFormValidity);
+        }
+    });
+
+    saveButton.addEventListener('click', () => {
+        if (!form.checkValidity()) return;
+
+        const data = {
+            name: document.getElementById('name-input').value.trim(),
+            username: document.getElementById('username-input').value.trim(),
+            bio: document.getElementById('bio-input').value.trim(),
+            dob: document.getElementById('dob-input').value,
+            gender: document.getElementById('gender-select').value,
+            image: profileImageBase64
+        };
+
+        localStorage.setItem('profileData', JSON.stringify(data));
+
+        window.location.href = 'profile-view.html';
+    });
+
+    loadSavedData();
+</script>
+
+</body>
+</html>
