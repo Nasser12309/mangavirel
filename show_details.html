@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">شاشة عرض المحتوى</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --text-active: #fff;
+            --text-secondary: #c9c9c9;
+            --background-dark: #60081E;
+            --genre-dot-color: #ff0000;
+            --episode-border-color: rgba(255, 255, 255, 0.2);
+            --card-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            --modal-overlay: rgba(0, 0, 0, 0.7);
+            --comments-bg: #151515;
+            --highlight-color: #ff0000;
+            --comment-area-bg: #222;
+        }
+
+        body {
+            display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 100vh;
+            margin: 0; padding-top: 55px; padding-bottom: 20px; font-family: Arial, sans-serif; background-color: #882F1F;
+            direction: rtl; position: relative;
+        }
+
+        .top-header { position: fixed; top: 0; left: 0; width: 100%; height: 55px; background-color: transparent; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box;  z-index: 100; }
+        .back-link { text-decoration: none; color: var(--text-active); padding: 5px 10px; }
+        .back-icon { font-size: 24px; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+
+        .main-content-wrapper {
+            width: 300px; max-width: 100%; display: flex; flex-direction: column; align-items: center; box-shadow: none; border-radius: 0;
+        }
+
+        .container, .interaction-bar, .genre-bar, .description-section, .episodes-section, .suggestions-section, .community-section {
+            width: 100%; box-sizing: border-box;
+        }
+
+        .container {
+            position: relative; height: 400px; overflow: hidden; border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5); margin-bottom: 20px;
+        }
+        .hero-image-only {
+            width: 100%; height: 100%; background-size: cover; background-position: center;
+            background-image: url('https://via.placeholder.com/400x400/390311/ffffff?text=Loading...');
+        }
+        .title-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 15px; background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 100%);
+        }
+        .show-title-only { font-size: 20px; font-weight: bold; color: var(--text-active); text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9); text-align: left; }
+        .interaction-bar { display: flex; justify-content: space-around; align-items: center; padding: 15px 0; margin-bottom: 20px; background-color: transparent; }
+        .action-button { display: flex; flex-direction: column; align-items: center; text-decoration: none; cursor: pointer; }
+        .action-button i { color: var(--text-active); }
+        .action-button span { color: var(--text-secondary); }
+        .action-button.active i, .action-button.active span { color: var(--highlight-color); }
+        .action-icon { font-size: 28px; margin-bottom: 5px; }
+        .action-text { font-size: 14px; font-weight: bold; }
+
+        .genre-bar { padding: 15px 10px; background-color: transparent; display: flex; justify-content: center; align-items: center; border-radius: 0; margin-bottom: 20px; }
+        .genre-item { color: var(--text-active); font-size: 18px; font-weight: bold; position: relative; padding: 0 8px; }
+        .genre-item:not(:last-child)::after { content: "\2022"; color: var(--genre-dot-color); font-size: 1.5em; position: absolute; left: -5px; top: 50%; transform: translateY(-50%); }
+        .description-section { padding: 15px; background-color: transparent; border-radius: 0; margin-bottom: 20px; }
+        .description-title { color: var(--text-active); font-size: 22px; font-weight: bold; margin-bottom: 10px; text-align: right; }
+        .description-text { color: var(--text-secondary); font-size: 16px; line-height: 1.6; text-align: right; }
+
+        .episodes-section { background-color: transparent; border-radius: 0; padding: 15px 0; box-sizing: border-box; margin-bottom: 20px;}
+        .episodes-header-wrapper { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 15px; padding: 0 15px;}
+        .episodes-header { color: var(--text-active); font-size: 30px; font-weight: bold; margin: 0;}
+
+        .new-tag {
+            background-color: var(--highlight-color); color: var(--text-active); font-size: 14px; font-weight: bold; padding: 2px 8px; border-radius: 4px;
+            margin-right: 10px;
+            animation: pulse 1.5s infinite ease-in-out; box-shadow: 0 0 8px rgba(255, 0, 0, 0.7); transform: scale(1); flex-shrink: 0;
+        }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+
+        .episode-card {
+            display: flex; align-items: center; flex-direction: row-reverse; background-color: transparent; padding: 10px 15px; margin-bottom: 10px; border-bottom: 1px solid var(--episode-border-color); box-shadow: none; text-decoration: none;
+        }
+        .episode-card:last-of-type { border-bottom: none; }
+        .episode-info { 
+            flex-grow: 1; text-align: right; padding: 0; 
+            /* التعديل هنا: لجعل الأيقونة والنص متجاورين */
+            display: flex; flex-direction: row-reverse; justify-content: flex-start; align-items: center;
+        }
+        
+        /* === كود إضافة علامة الإكمال === */
+        .completed-icon {
+            color: #4CAF50; /* لون أخضر للإشارة إلى الإكمال */
+            font-size: 18px;
+            margin-right: 10px; /* مسافة بين الأيقونة والعنوان */
+            flex-shrink: 0;
+            display: none; /* إخفاء مبدئيًا */
+        }
+        .episode-card.completed .completed-icon {
+            display: block; /* إظهار عندما يكون الفصل مكتملاً */
+        }
+        /* ============================ */
+
+        .episode-title {
+            color: var(--text-secondary); font-size: 16px; margin: 0; text-align: right; text-decoration: none; cursor: pointer; transition: color 0.2s;
+        }
+        .episode-card:hover .episode-title { color: var(--highlight-color); }
+
+        .suggestions-section { padding: 0 0 20px 0; }
+        .suggestions-header { color: var(--text-active); font-size: 30px; font-weight: bold; text-align: right; margin-bottom: 15px; padding: 0 15px; }
+        .suggestions-list { display: flex; overflow-x: auto; padding-bottom: 15px; padding-right: 15px; }
+        .suggestion-card { width: 100px; height: 150px; flex-shrink: 0; margin-left: 15px; overflow: hidden; border-radius: 8px; box-shadow: var(--card-shadow); background-color: #333; background-size: cover; background-position: center; cursor: pointer;}
+
+        .community-section { width: 100%; padding: 0 10px; margin-top: 20px; margin-bottom: 30px; box-sizing: border-box; }
+        .community-header { color: var(--text-active); font-size: 30px; font-weight: bold; text-align: right; margin-bottom: 15px; }
+        .community-card { display: flex; align-items: center; justify-content: flex-start; padding: 15px; background-color:#1F1F1F; border-radius: 8px; box-shadow: var(--card-shadow); cursor: pointer;}
+        .community-item-label { color: var(--text-active); font-size: 18px; font-weight: bold; margin-right: 15px; }
+        .community-item-count { color: var(--highlight-color); font-size: 18px; font-weight: bold; }
+
+        #comments-modal-overlay, #share-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--modal-overlay); z-index: 9999; display: none; align-items: flex-end; }
+        .comments-view, .share-view { width: 100%; max-height: 90vh; background-color: var(--comments-bg); border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.3s ease-out;}
+        .comments-view.is-visible, .share-view.is-visible { transform: translateY(0); }
+        .comments-top-bar, .share-top-bar { height: 55px; background-color: var(--comments-bg); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; }
+        .comments-top-bar .close-btn, .share-top-bar .close-btn { font-size: 24px; color: var(--text-active); cursor: pointer; }
+        .comments-top-bar .view-title, .share-top-bar .view-title { color: var(--text-active); font-size: 20px; font-weight: bold; flex-grow: 1; text-align: center; }
+        .comments-content { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; }
+        #no-comments-message { text-align: center; color: var(--text-secondary); padding: 30px; font-size: 18px; }
+        .comment-card { display: flex; flex-direction: row-reverse; align-items: flex-start; padding: 10px 15px; }
+
+        .user-avatar { width: 35px; height: 35px; border-radius: 50%; background-color: var(--highlight-color); margin-right: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--text-active); font-size: 16px; font-weight: bold; overflow: hidden; }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .comment-body { flex-grow: 1; text-align: right; background-color: var(--comment-area-bg); padding: 8px 12px; border-radius: 10px; }
+        .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-direction: row-reverse; }
+        .comment-username { color: var(--text-active); font-weight: bold; font-size: 15px; margin-left: 10px; }
+        .comment-time { color: var(--text-secondary); font-size: 11px; }
+        .comment-text { color: var(--text-secondary); font-size: 15px; line-height: 1.4; margin: 5px 0 0 0; text-align: right; }
+        .add-comment-section { width: 100%; background-color: var(--comments-bg); padding: 10px 15px; box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2); display: flex; align-items: center; box-sizing: border-box; flex-shrink: 0; }
+        .comment-input { flex-grow: 1; padding: 10px; border: none; border-radius: 20px; background-color: #333; color: var(--text-active); font-size: 16px; margin-left: 10px; text-align: right; outline: none; }
+        .comment-send-btn { background: none; border: none; color: #C04236; font-size: 20px; cursor: pointer; padding: 5px; }
+
+        /* --- Share Modal Specific Styles --- */
+        .share-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; }
+        .share-title { color: var(--text-active); font-size: 20px; font-weight: bold; margin-bottom: 15px; text-align: center; }
+        .share-url-container { display: flex; width: 100%; max-width: 400px; background-color: #222; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+        #share-url-display {
+            flex-grow: 1; padding: 10px; color: var(--text-secondary); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; direction: ltr; background-color: #222; border: none;
+        }
+        .copy-button { background-color: var(--highlight-color); color: var(--text-active); border: none; padding: 10px 15px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; flex-shrink: 0; }
+        .copy-button:hover { background-color: #d80000; }
+        .share-message { color: var(--highlight-color); font-weight: bold; margin-top: 10px; opacity: 0; transition: opacity 0.3s; }
+        .share-message.visible { opacity: 1; }
+        
+        .share-social-icons { display: flex; justify-content: center; gap: 20px; padding: 10px 0; }
+        .social-icon-link { color: var(--text-active); font-size: 30px; transition: color 0.2s; }
+        .social-icon-link:hover { color: var(--highlight-color); }
+        /* ------------------------------------- */
+
+        @media (min-width: 768px) {
+            .main-content-wrapper { width: 600px; }
+            .container { width: 600px; height: 500px; }
+            .genre-bar, .description-section, .episodes-section, .suggestions-section, .community-section { padding-right: 0; padding-left: 0; }
+            .suggestions-header, .episodes-header, .community-header { padding: 0 0; }
+            .suggestions-list { padding-right: 0; }
+        }
+        .suggestion-card.s1 {
+    background-image: url("Manga_Files/Demon-Slayer/Demon_Slayer.png");
+    background-size: cover; 
+    background-position: center; 
+}
+      .suggestion-card.s2 {
+    background-image: url("Manga_Files/Berserk/Berserk.png");
+    background-size: cover; 
+    background-position: center; 
+}
+      .suggestion-card.s3 {
+    background-image: url("Manhua_Files/The-God-of-High-School/The_God_of_High_School.png");
+    background-size: cover; 
+    background-position: center; 
+}
+      .suggestion-card.s4 {
+    background-image: url("Manhua_Files/Kill-the-Hero/Kill_the_Hero.png");
+    background-size: cover; 
+    background-position: center; 
+}
+      .suggestion-card.s5 {
+    background-image: url("Manga_Files/Vagabond/Vagabond.png");
+    background-size: cover; 
+    background-position: center; 
+}
+      .suggestion-card.s6 {
+    background-image: url("Manga_Files/Slam-Dunk/Slam_Dunk.png");
+    background-size: cover; 
+    background-position: center; 
+}
+    </style>
+</head>
+<body>
+
+    <header class="top-header">
+        <a href="manhua.html" class="back-link">
+            <i class="fas fa-arrow-right back-icon"></i>
+        </a>
+    </header>
+
+    <div class="main-content-wrapper">
+        <div class="container">
+            <div class="hero-image-only">
+                <div class="title-overlay">
+                    <h1 class="show-title-only">جار التحميل...</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="interaction-bar">
+            <div id="share-btn" class="action-button" onclick="handleShare()">
+                <i class="fas fa-share-alt action-icon"></i>
+                <span class="action-text">مشاركة</span>
+            </div>
+            <div id="dislike-btn" class="action-button" onclick="handleInteraction('dislike')">
+                <i class="fas fa-thumbs-down action-icon"></i>
+                <span class="action-text" id="dislike-count">0</span>
+            </div>
+            <div id="like-btn" class="action-button" onclick="handleInteraction('like')">
+                <i class="fas fa-thumbs-up action-icon"></i>
+                <span class="action-text" id="like-count">0</span>
+            </div>
+        </div>
+
+        <div class="genre-bar">
+            </div>
+
+        <div class="description-section">
+            <h2 class="description-title">نظرة عامة</h2>
+            <p class="description-text">...</p>
+        </div>
+
+
+        <div class="episodes-section">
+
+            <div class="episodes-header-wrapper">
+                <h2 class="episodes-header">الفصول</h2>
+            </div>
+
+            <div id="chapters-list-container">
+                 </div>
+
+        </div>
+
+        <div class="suggestions-section">
+            <h2 class="suggestions-header">مقترحات</h2>
+
+            <div class="suggestions-list">
+                <a href="show_details.html?id=Demon-Slayer" class="suggestion-card s1"></a>
+                <a href="show_details.html?id=Berserk" class="suggestion-card s2"></a>
+                <a href="show_details.html?id=The-God-of-High-School" class="suggestion-card s3"></a>
+                <a href="show_details.html?id=Kill-the-Hero" class="suggestion-card s4"></a>
+                <a href="show_details.html?id=Vagabond" class="suggestion-card s5"></a>
+                <a href="show_details.html?id=Slam-Dunk" class="suggestion-card s6"></a>
+            </div>
+        </div>
+
+        <div class="community-section">
+            <h2 class="community-header">المجتمع</h2>
+
+            <div class="community-card" id="open-comments-btn" onclick="showComments()">
+                <i class="fas fa-comment" style="color: var(--text-active);"></i>
+                <span class="community-item-label">التعليقات</span>
+                <span class="community-item-count">0</span>
+            </div>
+        </div>
+
+
+    </div>
+
+    <div id="comments-modal-overlay">
+
+        <div id="comments-view" class="comments-view">
+
+            <div class="comments-top-bar">
+                <i class="fas fa-times close-btn" onclick="hideComments()"></i>
+                <h1 id="view-title" class="view-title">التعليقات (0)</h1>
+                <div style="width: 24px;"></div>
+            </div>
+
+            <div class="comments-content">
+
+                <div id="comments-list">
+                    </div>
+
+            </div>
+
+            <div class="add-comment-section">
+                <input type="text" id="comment-input" class="comment-input" placeholder="أضف تعليق">
+                <button class="comment-send-btn" onclick="addComment()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+
+    </div>
+    <div id="share-modal-overlay">
+        <div id="share-view" class="share-view">
+             <div class="share-top-bar">
+                <i class="fas fa-times close-btn" onclick="hideShareModal()"></i>
+                <h1 class="view-title">مشاركة المحتوى</h1>
+                <div style="width: 24px;"></div>
+            </div>
+            <div class="share-content">
+                <p class="share-title">شارك هذا المحتوى مع أصدقائك:</p>
+                <div class="share-url-container">
+                    <input type="text" id="share-url-display" readonly>
+                    <button class="copy-button" onclick="copyShareUrl()">نسخ</button>
+                </div>
+                <p id="share-message" class="share-message">تم النسخ بنجاح!</p>
+                </div>
+        </div>
+    </div>
+    <script>
+
+        const MANHWA_DATA = [
+                {
+                id: "Reverend-insanity",
+                title: "Reverend insanity",
+                genres: ["أكشن", "العودة بالزمن", "نفسي"],
+                image: "Manhua_Files/Reverend-insanity/Reverend_insanity.png",
+                description: "​البطل هو فانغ يوان  وهو مزارع شيطاني ماكر، أناني، ولا يرحم، كان يمتلك خبرة 500 عام في الزراعة. بعد محاولته الفاشلة للوصول إلى قمة عالم الغو، يتمكن فانغ يوان من العودة بالزمن إلى الماضي، إلى فترة شبابه.",
+                chapters: [
+                    { number: 1, isNew: false }, { number: 2, isNew: false }, { number: 3, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                          {
+                id: "Solo-Leveling",
+                title: "Solo Leveling",
+                genres: ["أكشن", "نظام", "قوى خارقة"],
+                image: "Manhua_Files/Solo-Leveling/Solo_Leveling.png",
+                description: "تدور أحداث القصة في عالم حيث ظهرت البوابات الغامضة التي تربط عالم البشر بعالم الوحوش والزنزانات  لمواجهة هذه الوحوش، استيقظت قوى سحرية لدى بعض البشر ليصبحوا صيادين، يتم تصنيفهم حسب قوتهم من الأدنى إلى الأعلى.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "True-Beauty",
+                title: "True Beauty",
+                genres: ["دراما", "مدرسي", "رومانسي"],
+                image: "Manhua_Files/True-Beauty/True_Beauty.png",
+                description: "ليم جو-كيونغ  طالبة في المرحلة الثانوية، لطيفة ومرحة، لكنها تعاني من انعدام الثقة بالنفس بسبب مظهرها الطبيعي، مما عرضها للتنمر والتمييز من قبل عائلتها وأقرانها.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "The-Legend-of-the-Northern-Blade",
+                title: "The Legend of the Northern Blade",
+                genres: ["أكشن", "مغامرة", "انتقام"],
+                image: "Manhua_Files/The-Legend-of-the-Northern-Blade/The_Legend_of_the_Northern_Blade.png",
+                description: "جين مو-وون ، الوريث الوحيد لـ طائفة السماء الشمالية ، التي كانت بمثابة حصن لحماية بقية الموريم من قوى الظلام المعروفة باسم الليل الصامت",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "The-God-of-High-School",
+                title: "The God of High School",
+                genres: ["فانتازيا", "فنون قتالية", "كوميدي"],
+                image: "Manhua_Files/The-God-of-High-School/The_God_of_High_School.png",
+                description: "جين موري ، وهو طالب ثانوي متهور وخبير في فنون التايكوندو . يشارك موري في البطولة ببساطة من أجل المتعة وتحدي المقاتلين الأقوياء. خلال البطولة، يلتقي باثنين من المقاتلين الأقوياء اللذين يصبحان صديقيه وحليفيه الرئيسيين",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "The-Breaker",
+                title: "The Breaker",
+                genres: ["أكشن", "دراما", "مدرسي"],
+                image: "Manhua_Files/The-Breaker/The_Breaker.png",
+                description: "شي-وون يي  وهو طالب ثانوي ضعيف وخجول يعاني من التنمر الشديد في المدرسة. في محاولة يائسة للدفاع عن نفسه، يطلب من معلمه الجديد الغامض، هان تشون-وو ، تعليمه فنون القتال.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Kill-the-Hero",
+                title: "Kill the Hero",
+                genres: ["نظام","أكشن", "العودة بالزمن", "الانتقام"],
+                image: "Manhua_Files/Kill-the-Hero/Kill_the_Hero.png",
+                description: "كيم وو-جين  الذي كان في حياته السابقة أحد أعضاء نخبة نقابة يقودها شخص يُعرف بـ البطل المقدس جون لي. بعد أن كرس وو-جين حياته لمساعدة جون لي في إنقاذ العالم، يتم خيانته وقتله بدم بارد على يد البطل نفسه الذي كان يعتبره بطلاً للعالم.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "The-Beginning-after-The-End",
+                title: "The Beginning after The End",
+                genres: ["مغامرة", "فانتازيا","أكشن", "سحر", "عالم     آخر"],
+                image: "Manhua_Files/The-Beginning-after-The-End/The_Beginning_after_The_End.png",
+                description: "بعد موته المفاجئ والغامض، يُولد من جديد في عالم خيالي مليء بالسحر يُدعى ديكاثين، تحت اسم آرثر ليوين وهو الابن الأول لمغامرين متقاعدين.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Eleceed",
+                title: "Eleceed",
+                genres: ["خارق", "شونين", "كوميديا"],
+                image: "Manhua_Files/Eleceed/Eleceed.png",
+                description: "كايدن، رجل ذو قدرات خارقة تقاتل ضد مستخدمين أخرين للقدرات، لكنه تعرض لإصابات خطيرة جعلته يختبئ في جسد قط، ليجده جي وو الفتى اللطيف عاشق القطط وينقذه على انه قط متشرد، لكن منذ الليلة الأولى تحدث مصائب متتالية تدخل جي وو عالما جديدا يعرف بعالم المستيقظين.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Who-Made-Me-a-Princess",
+                title: "Who Made Me a Princess",
+                genres: ["رومانسي", "فانتازيا", "دراما"],
+                image: "Manhua_Files/Who-Made-Me-a-Princess/Who_Made_Me_a_Princess.png",
+                description: "تدور القصة حول فتاة من العصر الحديث تستيقظ لتجد نفسها قد تجسَّدت في جسد الأميرة أثانازيا دي ألجيا أوبليا، وهي شخصية ثانوية في رواية قرأتها، ومصيرها هو أن تُقتل على يد والدها، الإمبراطور البارد والقاسي كلود دي ألجيا أوبليا، في عيد ميلادها الثامن عشر.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Love-Revolution",
+                title: "Love Revolution",
+                genres: [ "كوميدي","مدرسي"  ,"رومانسي"],
+                image: "Manhua_Files/Love-Revolution/Love_Revolution.png",
+                description: "على الرغم من أن جو-يونغ يبدو لطيفًا وبريئًا، إلا أن جا-ريم تبدو باردة وغامضة وترفض باستمرار محاولاته للتقرب منها. لكن جو-يونغ مصمم على كسب قلبها، ولا يستسلم بسهولة.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Sweet-Home",
+                title: "Sweet Home",
+                genres: ["بقاء على قيد الحياة", "رعب", "نفسي"],
+                image: "Manhua_Files/Sweet-Home/Sweet_Home.png",
+                description: "تدور القصة حول تشا هيون-سو، وهو طالب في المدرسة الثانوية يائس ومنعزل، ويعاني من صدمة نفسية دفعته للانطواء والعيش وحيداً في شقة جديدة بعد فقدان عائلته في حادث مأساوي.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Noblesse",
+                title: "Noblesse",
+                genres: ["أكشن", "مدرسي", "دراما"],
+                image: "Manhua_Files/Noblesse/Noblesse.png",
+                description: "يستيقظ رايزل فجأة في العصر الحديث، كوريا الجنوبية، ليجد عالماً قد تغير تماماً. يبدأ حياته الجديدة كطالب في مدرسة ييران الثانوية، بتوجيه من خادمه المخلص والمدير الحالي للمدرسة، فرانكنشتاين.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes:0,
+                comments: []
+            },
+                {
+                id: "Seasons-Of-Blossom",
+                title: "Seasons Of Blossom",
+                genres: ["شريحة من الحياة", "رومانسي", "دراما"],
+                image: "Manhua_Files/Seasons-Of-Blossom/Seasons_Of_Blossom.png",
+                description: "تتكون من أربعة فصول السنة حيث يمثل كل فصل منها أحد مواسم السنة ويركز على قصص مراهقين وشباب مختلفين يعيشون في نفس المدرسة مدرسة تشيونغسيوم الثانوية أو الجامعة، وتتشابك قصصهم وحياتهم بطرق غير متوقعة.",
+                chapters: [
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+          
+            {
+                id: "Nano-Machine",
+                title: "Nano Machine",
+                genres: ["أكشن", "فنون قتالية", "موريم"],
+                image: "Manhua_Files/Nano-Machine/Nano_Machine.png",
+                description: "تلتقي تقنية النانو بفنون القتال في أكاديمية ماشين. قد لا تكون والدة يو أون إحدى الزوجات الست الرسميات لرئيس الكهنة، لكن سلالة والده لا تزال تؤهله لفرصة تولي منصب الكاهن الصغير. فهل ستساعد حقنة نانوية غامضة من أحد أحفاده المستقبليين يو أون في هذه المنافسة الشرسة ضد إخوته غير الأشقاء الأقوياء؟",
+                chapters: [
+                  
+                    { number: 1, isNew: false },
+                    { number: 2, isNew: false },
+                    { number: 3, isNew: false },
+                    { number: 4, isNew: false },
+                    { number: 5, isNew: false },
+                    { number: 6, isNew: false },
+                    { number: 7, isNew: false }
+                ],
+                likes: 0,
+                dislikes:0,
+                comments: []
+            },
+
+      
+            {
+                id: "Your-Talent-is-Mine",
+                title: "Your Talent is Mine",
+                genres: ["فانتازيا", "قوى خارقة", "نظام"],
+                image: "Manhua_Files/Your-Talent-is-Mine/Your_Talent_is_Mine.png",
+                description: "الشاب يي تيان في عالم يواجه كارثة عالمية. فجأة، بدأت وحوش وكائنات غريبة من أبعاد أخرى في غزو العالم، مما أدى إلى تحويل الحياة اليومية إلى صراع للبقاء.",
+                chapters: [
+
+                    { number: 1, isNew: true },
+                    { number: 2, isNew: true },
+                    { number: 3, isNew: true },
+                    { number: 4, isNew: true },
+                    { number: 5, isNew: true },
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },  
+            ];
+
+        const MANGA_DATA = [
+                {
+                id: "venom",
+                title: "Venom",
+                genres: ["أكشن", "فنون قتالية", "قتال"],
+                image: "Comic_Files/venom/venom.png",
+                description: "فينوم",
+                chapters: [
+                
+                    { number: 1, isNew: true }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: [
+              
+                ]
+            },
+                {
+                id: "One-Piece",
+                title: "One Piece",
+                genres: ["أكشن", "كوميديا", "مغامرة"],
+                image: "Manga_Files/One-Piece/One_Piece.png",
+                description: "مونكي دي. لوفي  وهو شاب مفعم بالحيوية والبراءة، لديه حلم واحد عظيم أن يصبح ملك القراصنة دافعه لتحقيق هذا الحلم هو العثور على الكنز الأسطوري الذي لا يُقدّر بثمن، المعروف باسم ون بيس ، الذي خلفه ملك القراصنة السابق، غول دي. روجر.",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Fruits-Basket",
+                title: "Fruits Basket",
+                genres: ["رومانسي", "شريحة من الحياة", "فانتازيا"],
+                image: "Manga_Files/Fruits-Basket/Fruits_Basket.png",
+                description: "الفتاة تورو هوندا التي تتمتع بقلب طيب لا يصدق، وتجد نفسها فجأة جزءًا من حياة عائلة غامضة تحمل سراً مظلماً.",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Kimi-ni-Todoke",
+                title: "Kimi ni Todoke",
+                genres: ["دراما", "رومانسي", "مدرسي"],
+                image: "Manga_Files/Kimi-ni-Todoke/Kimi_ni_Todoke.png",
+                description: "طالبة في المرحلة الثانوية ورحلتها لكسر عزلتها وبناء علاقات اجتماعية وعاطفية.",
+                chapters: [
+              
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Haikyuu",
+                title: "Haikyuu",
+                genres: ["كوميدي", "مدرسي", "رياضي"],
+                image: "Manga_Files/Haikyuu/Haikyuu.png",
+                description: "شويّو هيناتا وهو طالب في المدرسة المتوسطة يقع في حب رياضة الكرة الطائرة بعد مشاهدته لمباراة على التلفزيون يشارك فيها لاعب قصير القامة يلقب العملاق الصغير",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Kingdom",
+                title: "Kingdom",
+                genres: ["أكشن", "عسكري", "تاريخي"],
+                image: "Manga_Files/Kingdom/Kingdom.png",
+                description: "حقبة تاريخية حقيقية تُعرف بـ فترة الممالك المتحاربة في الصين القديمة ، وهي حقبة قسمت فيها الصين إلى سبعة ممالك تتنافس باستمرار على السلطة والسيادة.",
+                chapters: [
+                  
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Attack-on-Titan",
+                title: "Attack on Titan",
+                genres: ["نهاية العالم", "عسكري", "مأساة"],
+                image: "Manga_Files/Attack-on-Titan/Attack_on_Titan.png",
+                description: "عالم خيالي يسوده اليأس، حيث تعيش بقايا البشرية محصورة داخل ثلاث أسوار ضخمة ماريا، روز، سينا لحماية أنفسهم من كائنات عملاقة آكلة للبشر تُعرف باسم العمالقة",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Dragon-Ball",
+                title: "Dragon Ball",
+                genres: ["أكشن", "فنون قتالية", "كوميديا"],
+                image: "Manga_Files/Dragon-Ball/Dragon_Ball.png",
+                description: "تنقسم قصة Dragon Ball الأصلية إلى جزأين رئيسيين في المانجا: الجزء الأول (مغامرات الطفولة)، والجزء الثاني (المعارك الملحمية).",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Naruto",
+                title: "Naruto",
+                genres: ["أكشن", "فنون قتالية", "كوميديا"],
+                image: "Manga_Files/Naruto/Naruto.png",
+                description: "تدور القصة في عالم خيالي من النينجا والقرى المخفية، حيث يتم استخدام فنون القتال  والقوة الداخلية البطل هو ناروتو أوزوماكي وهو صبي نينجا مشاغب ومتهور يعيش في قرية كونوها المخفية",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Slam-Dunk",
+                title: "Slam Dunk",
+                genres: ["رياضي", "مدرسي", "كوميديا"],
+                image: "Manga_Files/Slam-Dunk/Slam_Dunk.png",
+                description: "تدور القصة حول فريق كرة السلة في مدرسة شوهوكو الثانوية البطل هو هاناميتشي ساكوراجي، وهو فتى مراهق طويل القامة وذو شعر أحمر، يتميز بشخصية متهورة وزعامة عصابة سابقة، لكنه يفتقر تمامًا إلى الحظ مع الفتيات",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Vinland-Saga",
+                title: "Vinland Saga",
+                genres: ["قتال", "مغامرة", "تاريخي"],
+                image: "Manga_Files/Vinland-Saga/Vinland_Saga.png",
+                description: "في مطلع القرن الحادي عشر، وتحديداً في شمال أوروبا خلال ذروة عصر الفايكنج وصراعاتهم بين الإنجليز والدنماركيين ثورفين وهو فتى صغير ينمو ليصبح محارباً شرساً وعنيفاً ضمن فرقة مرتزقة فايكنج دافعه الوحيد في الحياة هو الانتقام لمقتل والده",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Monster",
+                title: "Monster",
+                genres: ["جريمة", "دراما", "غموض"],
+                image: "Manga_Files/Monster/Monster.png",
+                description: "في ألمانيا في نهاية القرن العشرين، وتركز على الدكتور كينزو تينما وهو جراح أعصاب ياباني لامع يعمل في مستشفى ألماني مرموق حيث تبدأ القصة مع الطفل يوهان ليبرت",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Vagabond",
+                title: "Vagabond",
+                genres: ["دراما", "فلسفي", "تاريخي"],
+                image: "Manga_Files/Vagabond/Vagabond.png",
+                description: "شينمين تاكيزو وهو شاب جامح عنيف ومكروه من قريته في حقبة سينغوكو باليابان . بعد هروبه من القرية وهو في سن السابعة عشرة، ينضم تاكيزو إلى الجيش المهزوم في معركة سيكيغاهارا الكبرى.",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Berserk",
+                title: "Berserk",
+                genres: ["قتال", "مأساة", "نفسي"],
+                image: "Manga_Files/Berserk/Berserk.png",
+                description: "في عالم مليء بالحروب، ووحوش الفانتازيا المرعبة، والصراع بين القدر والإرادة الحرة البطل هو غاتس ،  غاتس هو محارب ضخم ومُتَنَدِّب، مسلح بسيف عملاق يُدعى قاطع التنانين يكرس غاتس حياته للانتقام بعد تعرضه لخيانة مروعة تركت له علامة ملعونة تجذب إليه كائنات شيطانية كل ليلة.",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes: 0,
+                comments: []
+            },
+                {
+                id: "Demon-Slayer",
+                title: "Demon Slayer",
+                genres: ["أكشن", "فانتازيا", "مغامرة"],
+                image: "Manga_Files/Demon-Slayer/Demon_Slayer.png",
+                description: "تانجيرو كامادو ، وهو صبي طيب القلب ومسؤول يعيش حياة هادئة مع عائلته في الجبال عن طريق بيع الفحم. تتغير حياته جذريًا عندما يعود يوماً ليجد عائلته قد ذُبحت بالكامل على يد شيطان. الناجية الوحيدة هي أخته الصغرى، نيزوكو  التي تحولت بدورها إلى شيطانة.",
+                chapters: [
+
+                    { number: 1, isNew: false }
+                ],
+                likes: 0,
+                dislikes:0,
+                comments: []
+            },
+        ];
+
+
+        let currentContentData = null;
+        let currentCommentsData = [];
+        let userName = "زائر";
+        let userAvatarUrl = null;
+        let userAction = null;
+        let likeCount = 0;
+        let dislikeCount = 0;
+
+        function loadUserData() {
+            const savedDataJSON = localStorage.getItem('profileData');
+            if (savedDataJSON) {
+                try {
+                    const savedData = JSON.parse(savedDataJSON);
+                    userName = savedData.name || "أنت";
+                    userAvatarUrl = savedData.image || null;
+                } catch (e) {
+                    console.error("خطأ في تحميل بيانات المستخدم:", e);
+                }
+            }
+        }
+
+        function getContentIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        // ==============================================
+        // الدوال الجديدة لحفظ وعرض حالة الإكمال في localStorage - (صحيحة)
+        // ==============================================
+
+        function isChapterCompleted(contentId, chapterNumber) {
+            const completedChapters = JSON.parse(localStorage.getItem('completedChapters')) || {};
+            // يتم تخزينها كـ { "ContentID-ChapterNumber": true }
+            return completedChapters[`${contentId}-${chapterNumber}`] === true;
+        }
+
+        function markChapterAsCompleted(contentId, chapterNumber) {
+            let completedChapters = JSON.parse(localStorage.getItem('completedChapters')) || {};
+            const key = `${contentId}-${chapterNumber}`;
+            
+            // تمييز الفصل بالإكمال
+            completedChapters[key] = true; 
+            
+            localStorage.setItem('completedChapters', JSON.stringify(completedChapters));
+            console.log(`تم وضع علامة إكمال على الفصل ${chapterNumber} للمحتوى ${contentId}.`);
+            
+            // يمكننا تحديث واجهة المستخدم بشكل فوري إذا كنا على نفس الصفحة
+            const chapterCard = document.querySelector(`.episode-card[data-chapter-number="${chapterNumber}"]`);
+            if(chapterCard) {
+                chapterCard.classList.add('completed');
+            }
+        }
+
+        // ==============================================
+        // نهاية دوال حالة الإكمال
+        // ==============================================
+
+
+        function renderContentDetails(content) {
+            if (!content) return;
+
+            currentContentData = content;
+            currentCommentsData = [...content.comments] || [];
+            likeCount = content.likes || 0;
+            dislikeCount = content.dislikes || 0;
+            document.getElementById('pageTitle').textContent = content.title;
+
+            document.querySelector('.show-title-only').textContent = content.title;
+            document.querySelector('.hero-image-only').style.backgroundImage = `url('${content.image}')`;
+
+            document.querySelector('.description-text').textContent = content.description;
+
+            const genreBar = document.querySelector('.genre-bar');
+            genreBar.innerHTML = content.genres.map(genre =>
+                `<span class="genre-item">${genre}</span>`
+            ).join('');
+
+            const chaptersListContainer = document.getElementById('chapters-list-container');
+            chaptersListContainer.innerHTML = '';
+
+            content.chapters.sort((a, b) => b.number - a.number).forEach(chapter => {
+                // **تعديل 1: فحص حالة الإكمال (التطبيق صحيح)**
+                const isCompleted = isChapterCompleted(content.id, chapter.number);
+                
+                const newTag = chapter.isNew ? '<span class="new-tag">New</span>' : '';
+                const chapterCard = document.createElement('a');
+                
+                // **تعديل 2: إضافة فئة 'completed' وعلامة البيانات data-chapter-number (التطبيق صحيح)**
+                chapterCard.href = `chapter_reader.html?id=${content.id}&chapter=${chapter.number}`;
+                chapterCard.className = `episode-card ${isCompleted ? 'completed' : ''}`;
+                chapterCard.setAttribute('data-chapter-number', chapter.number); 
+
+                chapterCard.innerHTML = `
+                    <div class="episode-info">
+                        <i class="fas fa-check-circle completed-icon"></i>
+                        ${newTag}
+                        <span class="episode-title">الفصل ${chapter.number}</span>
+                    </div>
+                `;
+                chaptersListContainer.appendChild(chapterCard);
+            });
+
+            updateCountsDisplay();
+            updateCommentCounts();
+        }
+
+        function updateCountsDisplay() {
+            document.getElementById('like-count').innerText = likeCount;
+            document.getElementById('dislike-count').innerText = dislikeCount;
+
+            const likeBtn = document.getElementById('like-btn');
+            const dislikeBtn = document.getElementById('dislike-btn');
+
+            likeBtn.classList.toggle('active', userAction === 'like');
+            dislikeBtn.classList.toggle('active', userAction === 'dislike');
+        }
+
+        function handleInteraction(action) {
+            if (action === 'like') {
+                if (userAction === 'like') {
+                    likeCount--; userAction = null;
+                } else {
+                    likeCount++;
+                    if (userAction === 'dislike') { dislikeCount--; }
+                    userAction = 'like';
+                }
+            } else if (action === 'dislike') {
+                if (userAction === 'dislike') {
+                    dislikeCount--; userAction = null;
+                } else {
+                    dislikeCount++;
+                    if (userAction === 'like') { likeCount--; }
+                    userAction = 'dislike';
+                }
+            }
+            updateCountsDisplay();
+        }
+
+        function updateCommentCounts() {
+            const count = currentCommentsData.length;
+            const commentCountElement = document.getElementById('open-comments-btn').querySelector('.community-item-count');
+            if (commentCountElement) {
+                commentCountElement.innerText = count;
+            }
+            document.getElementById('view-title').innerText = `التعليقات (${count})`;
+
+            const listContainer = document.getElementById('comments-list');
+            let noCommentsMsg = document.getElementById('no-comments-message');
+
+            if (count === 0) {
+                if (!noCommentsMsg) {
+                    noCommentsMsg = document.createElement('p');
+                    noCommentsMsg.id = 'no-comments-message';
+                    noCommentsMsg.innerText = 'لا توجد تعليقات حالياً. كن أول من يعلق!';
+                    listContainer.appendChild(noCommentsMsg);
+                }
+            } else {
+                if (noCommentsMsg) {
+                    noCommentsMsg.remove();
+                }
+            }
+        }
+
+        function createCommentCard(comment) {
+            const avatarLetter = comment.user.charAt(0).toUpperCase();
+
+            const avatarContent = comment.image ?
+                                  `<img src="${comment.image}" alt="${avatarLetter}">` :
+                                  avatarLetter;
+            const avatarStyle = comment.image ? `background-color: transparent;` : `background-color: var(--highlight-color);`;
+
+            const card = document.createElement('div');
+            card.className = 'comment-card';
+            card.innerHTML = `
+                <div class="user-avatar" style="${avatarStyle}">
+                    ${avatarContent}
+                </div>
+                <div class="comment-body">
+                    <div class="comment-header">
+                        <span class="comment-time">${comment.time}</span>
+                        <span class="comment-username">${comment.user}</span>
+                    </div>
+                    <p class="comment-text">${comment.text}</p>
+                </div>
+            `;
+            return card;
+        }
+
+        function renderComments() {
+            const listContainer = document.getElementById('comments-list');
+
+            const existingNoCommentMsg = document.getElementById('no-comments-message');
+            listContainer.innerHTML = '';
+            if (existingNoCommentMsg) {
+                listContainer.appendChild(existingNoCommentMsg);
+            }
+
+            currentCommentsData.forEach(comment => {
+                const card = createCommentCard(comment);
+                listContainer.appendChild(card);
+            });
+
+            updateCommentCounts();
+
+            const commentsContent = document.querySelector('.comments-content');
+            setTimeout(() => {
+                commentsContent.scrollTop = commentsContent.scrollHeight;
+            }, 50);
+        }
+
+        function addComment() {
+            const inputField = document.getElementById('comment-input');
+            const commentText = inputField.value.trim();
+
+            if (commentText === "") {
+                return;
+            }
+
+            const now = new Date();
+            const timeString = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const newComment = {
+                user: userName,
+                text: commentText,
+                time: `الساعة ${timeString}`,
+                timestamp: now.getTime(),
+                image: userAvatarUrl
+            };
+
+            currentCommentsData.push(newComment);
+            inputField.value = '';
+
+            renderComments();
+        }
+
+        function showComments() {
+            const overlay = document.getElementById('comments-modal-overlay');
+            const view = document.getElementById('comments-view');
+
+            renderComments();
+
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                view.classList.add('is-visible');
+            }, 10);
+        }
+
+        function hideComments() {
+            const overlay = document.getElementById('comments-modal-overlay');
+            const view = document.getElementById('comments-view');
+
+            view.classList.remove('is-visible');
+
+            view.addEventListener('transitionend', function handler() {
+                if (!view.classList.contains('is-visible')) {
+                    overlay.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                    view.removeEventListener('transitionend', handler);
+                }
+            });
+        }
+
+        function displayError404() {
+             document.querySelector('.show-title-only').textContent = "خطأ 404";
+             document.querySelector('.description-text').textContent = "عذراً، لم نتمكن من العثور على المحتوى المطلوب. يرجى التأكد من صحة الرابط.";
+             document.querySelector('.interaction-bar').style.display = 'none';
+             document.querySelector('.genre-bar').style.display = 'none';
+             document.querySelector('.episodes-section').style.display = 'none';
+             document.querySelector('.suggestions-section').style.display = 'none';
+             document.querySelector('.community-section').style.display = 'none';
+
+             document.getElementById('chapters-list-container').innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: 20px;">الرجاء العودة إلى الصفحة الرئيسية.</p>`;
+        }
+        
+        // **الدالة الجديدة لحفظ العنصر في سجل القراءة**
+        function saveToHistoryFromLocalStorage() {
+            const itemDataJSON = localStorage.getItem('lastClickedItem');
+            
+            if (itemDataJSON) {
+                try {
+                    const itemData = JSON.parse(itemDataJSON);
+                    
+                    // 1. جلب سجل القراءة الحالي
+                    let readHistory = [];
+                    const historyJSON = localStorage.getItem('readHistory');
+                    if (historyJSON) {
+                        readHistory = JSON.parse(historyJSON);
+                    }
+                    
+                    // 2. التحقق مما إذا كان العنصر موجودًا بالفعل
+                    const existingIndex = readHistory.findIndex(item => item.id === itemData.id);
+                    
+                    const newItem = {
+                        id: itemData.id,
+                        title: itemData.title,
+                        image: itemData.image,
+                        lastRead: new Date().toISOString() // إضافة تاريخ آخر قراءة
+                    };
+                    
+                    if (existingIndex !== -1) {
+                        // إذا كان موجودًا، قم بتحديث تاريخ آخر قراءة ووضعه في المقدمة
+                        readHistory.splice(existingIndex, 1);
+                        readHistory.unshift(newItem);
+                        console.log(`تم تحديث سجل القراءة للعنصر: ${itemData.title}`);
+
+                    } else {
+                        // إذا لم يكن موجودًا، أضفه في المقدمة
+                        readHistory.unshift(newItem);
+                        console.log(`تم إضافة العنصر إلى سجل القراءة: ${itemData.title}`);
+                    }
+                    
+                    // 3. حفظ السجل المحدث
+                    localStorage.setItem('readHistory', JSON.stringify(readHistory));
+                    
+                    // اختياري: حذف العنصر المؤقت من localStorage
+                    localStorage.removeItem('lastClickedItem');
+
+                } catch (e) {
+                    console.error("خطأ في معالجة بيانات lastClickedItem:", e);
+                }
+            }
+        }
+        
+        /* --- دوال المشاركة الجديدة --- */
+
+        function getShareData() {
+            if (!currentContentData) {
+                return { title: 'مشاركة محتوى', text: 'شاهد هذا المحتوى المميز!', url: window.location.href };
+            }
+            const title = `شاهد: ${currentContentData.title}`;
+            const text = `${currentContentData.description.substring(0, 100)}...`;
+            const url = window.location.href; // الرابط الحالي يحتوي على الـ ID
+
+            return { title, text, url };
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (err) {
+                console.error('فشل النسخ اليدوي:', err);
+                return false;
+            }
+        }
+        
+        async function handleShare() {
+            const shareData = getShareData();
+
+            if (navigator.share) {
+                // 1. استخدام Web Share API (المفضلة للأجهزة المحمولة)
+                try {
+                    await navigator.share(shareData);
+                    console.log('تمت المشاركة بنجاح عبر واجهة المتصفح.');
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('فشل المشاركة عبر واجهة المتصفح:', err);
+                        // في حالة فشل المشاركة لأي سبب آخر، نفتح نافذة النسخ الاحتياطية
+                        showShareModal(shareData.url);
+                    } else {
+                        console.log('تم إلغاء المشاركة.');
+                    }
+                }
+            } else {
+                // 2. الخيار الاحتياطي: إظهار نافذة منبثقة للنسخ اليدوي
+                showShareModal(shareData.url);
+            }
+        }
+
+        function showShareModal(url) {
+            const overlay = document.getElementById('share-modal-overlay');
+            const view = document.getElementById('share-view');
+            const urlDisplay = document.getElementById('share-url-display');
+
+            urlDisplay.value = url; // وضع الرابط في حقل النص
+            document.getElementById('share-message').classList.remove('visible'); // إخفاء رسالة "تم النسخ"
+
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                view.classList.add('is-visible');
+            }, 10);
+        }
+
+        function hideShareModal() {
+            const overlay = document.getElementById('share-modal-overlay');
+            const view = document.getElementById('share-view');
+
+            view.classList.remove('is-visible');
+
+            view.addEventListener('transitionend', function handler() {
+                if (!view.classList.contains('is-visible')) {
+                    overlay.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                    view.removeEventListener('transitionend', handler);
+                }
+            });
+        }
+
+        async function copyShareUrl() {
+            const urlDisplay = document.getElementById('share-url-display');
+            const successMsg = document.getElementById('share-message');
+            
+            const isCopied = await copyToClipboard(urlDisplay.value);
+
+            if (isCopied) {
+                successMsg.innerText = 'تم نسخ الرابط!';
+                successMsg.classList.add('visible');
+                
+                setTimeout(() => {
+                    successMsg.classList.remove('visible');
+                    hideShareModal();
+                }, 1500); // إخفاء الرسالة وإغلاق النافذة بعد ثانية ونصف
+            } else {
+                successMsg.innerText = 'فشل النسخ! حاول يدوياً.';
+                successMsg.classList.add('visible');
+            }
+        }
+        
+        /* --- نهاية دوال المشاركة الجديدة --- */
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserData();
+
+            const currentId = getContentIdFromURL();
+
+            if (!currentId) {
+                 displayError404();
+                 return;
+            }
+
+            const allContentData = [
+                ...MANHWA_DATA,
+                ...MANGA_DATA
+            ];
+
+            const selectedContent = allContentData.find(item => item.id === currentId);
+
+            if (selectedContent) {
+                renderContentDetails(selectedContent);
+                // ** الاستدعاء الحاسم لحفظ العنصر في السجل بعد التحميل **
+                saveToHistoryFromLocalStorage(); 
+                
+                // مثال للتجربة: إلغاء التعليق عن السطر التالي لتمييز الفصل الأول كمكتمل فورًا
+                // markChapterAsCompleted(currentId, 1);
+
+            } else {
+                displayError404();
+            }
+        });
+    </script>
+
+</body>
+</html>
