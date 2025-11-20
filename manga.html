@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-adsense-account" content="ca-pub-1763885261035018">
+    <title>manga</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #ff3d00;
+            --background-dark: #121212;
+            --nav-background: #000000;
+            --text-active: white;
+            --text-inactive: #888;
+            --header-height: 65px;
+            --filter-sidebar-width: 85%;
+            --text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color:#982F1F;
+            color: var(--text-active);
+            padding-top: 60px;
+            padding-bottom: 70px;
+            overflow-x: hidden;
+            direction: ltr;
+        }
+
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 55px;
+            background-color:#C04236;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            box-shadow: none;
+            z-index: 1000;
+        }
+
+        .title-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            order: 2;
+        }
+
+        .left-icons {
+            display: flex;
+            gap: 15px;
+            order: 1;
+            flex-shrink: 0;
+            padding-inline-start: 5px;
+        }
+
+        .right-icons {
+            display: flex;
+            gap: 15px;
+            order: 3;
+            flex-shrink: 0;
+            padding-inline-end: 5px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .header-icon {
+            color: var(--text-active);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+       .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background-color:#C04236;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .bottom-nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 9px;
+            text-align: center;
+            flex-grow: 1;
+            transition: color 0.3s ease;
+            padding: 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bottom-nav a i {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 3px;
+            transition: font-size 0.3s ease;
+        }
+
+        .search-overlay {
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            z-index: 2000;
+            top: 0;
+            left: 0;
+            background-color: var(--nav-background);
+            overflow-y: auto;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .search-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .search-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            height: var(--header-height);
+            background-color:#C04236;
+        }
+
+        .search-header .icons-left-search {
+            display: flex;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
+        .search-header .filter-icon-bar-top {
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            flex-shrink: 0;
+            padding: 5px;
+        }
+
+        .search-header .search-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            flex-grow: 1;
+            text-align: right;
+        }
+
+        .search-header .close-search-btn {
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .search-input-section {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            gap: 0;
+        }
+
+        .search-input-wrapper {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            background-color: var(--background-dark);
+            border-radius: 25px;
+            padding: 5px 15px;
+            height: 45px;
+            order: 1;
+        }
+
+        .search-input-wrapper input {
+            flex-grow: 1;
+            border: none;
+            background: none;
+            color: var(--text-active);
+            font-size: 18px;
+            outline: none;
+            text-align: right;
+            padding-inline-start: 5px;
+        }
+
+        .search-input-wrapper i.fa-search {
+            color: var(--text-inactive);
+            order: -1;
+            cursor: pointer;
+        }
+
+        .search-results-container {
+            padding: 15px 10px;
+        }
+
+        .search-result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        #noResultsMessage {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-inactive);
+            font-size: 18px;
+            display: none;
+        }
+
+        .search-result-grid .movie-card {
+            display: block;
+            width: 100%;
+            padding-bottom: 150%;
+            position: relative;
+            background-color: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        .search-result-grid .card-title {
+            font-size: 11px;
+        }
+
+        .movie-card.hidden {
+            display: none;
+        }
+
+        .filter-sidebar {
+            height: 100%;
+            width: var(--filter-sidebar-width);
+            position: fixed;
+            z-index: 3000;
+            top: 0;
+            left: 0;
+            background-color: var(--nav-background);
+            overflow-x: hidden;
+            overflow-y: auto;
+            transition: transform 0.5s;
+            transform: translateX(-100%);
+        }
+
+        .filter-sidebar.active {
+            transform: translateX(0);
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            height: var(--header-height);
+            background-color:#C04236 ;
+            position: sticky;
+            top: 0;
+            width: 100%;
+            box-sizing: border-box;
+            border-bottom: 1px solid var(--border-color, #333);
+        }
+
+        .filter-header .back-to-search-btn {
+            color: var(--text-active);
+            font-size: 30px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .filter-header .filter-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-active);
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .filter-content {
+            padding: 20px 15px;
+        }
+
+        .filter-section {
+            margin-bottom: 30px;
+        }
+
+        .filter-section h3 {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--text-active);
+            margin-bottom: 15px;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-tag {
+            background-color: #C04236;
+            color: var(--text-active);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 1px solid var(--text-inactive);
+            transition: all 0.2s ease;
+        }
+
+        .filter-tag:hover, .filter-tag.selected {
+            background-color: white;
+            color:black;
+            border-color: black;
+        }
+
+        .apply-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #C04236;
+            color: var(--text-active);
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .reset-btn-bottom {
+            width: 100%;
+            padding: 15px;
+            background: none;
+            color: var(--text-inactive);
+            border: 1px solid var(--text-inactive);
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .filter-section.age-rating {
+            display: block;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            transition: opacity 0.5s;
+            opacity: 0;
+        }
+
+        .overlay.active {
+            width: 100%;
+            opacity: 1;
+        }
+
+        .movie-grid-container {
+            padding: 10px 10px 20px;
+        }
+
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .movie-card {
+            display: block;
+            width: 100%;
+            padding-bottom: 150%;
+            position: relative;
+            background-color: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.03);
+        }
+
+        .movie-card img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        .card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 8px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+            box-sizing: border-box;
+        }
+
+        .card-title {
+            color: var(--text-active);
+            font-size: 11px;
+            font-weight: bold;
+            text-shadow: var(--text-shadow);
+            line-height: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: right;
+            margin-bottom: 2px;
+        }
+
+        @media (min-width: 768px) {
+            .movie-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 15px;
+            }
+            .card-title {
+                font-size: 14px;
+            }
+        }
+
+        .card-classification {
+            color: var(--text-active);
+            font-size: 10px;
+            font-weight: normal;
+            text-shadow: var(--text-shadow);
+            line-height: 1.2;
+            text-align: right;
+            margin-top: 2px;
+            margin-bottom: 1px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bottom-nav a.active {
+      color: #072F1F;
+  }
+    </style>
+</head>
+<body>
+
+<div id="filterSidebar" class="filter-sidebar">
+    <div class="filter-header">
+
+        <i class="fas fa-arrow-right back-to-search-btn" onclick="closeFilter()"></i>
+
+        <div class="filter-title">فلتر</div>
+
+        <div style="width: 30px;"></div>
+    </div>
+
+    <div class="filter-content">
+
+
+        <div class="filter-section">
+            <h3>حدد التصنيفات</h3>
+            <div class="filter-tags" id="genre-tags">
+                <span class="filter-tag" data-filter-value="دراما">دراما</span>
+                <span class="filter-tag" data-filter-value="كوميدي">كوميدي</span>
+                <span class="filter-tag" data-filter-value="رعب">رعب</span>
+                <span class="filter-tag" data-filter-value="رومانسي">رومانسي</span>
+                <span class="filter-tag" data-filter-value="أكشن">أكشن</span>
+                <span class="filter-tag" data-filter-value="خيال علمي">خيال علمي</span>
+                <span class="filter-tag" data-filter-value="مدرسي">مدرسي</span>
+                <span class="filter-tag" data-filter-value="تاريخي">تاريخي</span>
+                <span class="filter-tag" data-filter-value="رياضي">رياضي</span>
+                <span class="filter-tag" data-filter-value="نفسي">نفسي</span>
+                <span class="filter-tag" data-filter-value="خارق للطبيعة">خارق للطبيعة</span>
+                <span class="filter-tag" data-filter-value="من الحياة">من الحياة</span>
+                <span class="filter-tag" data-filter-value="غموض">غموض</span>
+                <span class="filter-tag" data-filter-value="عالم آخر">عالم آخر</span>
+                <span class="filter-tag" data-filter-value="فانتازيا">فانتازيا</span>
+                <span class="filter-tag" data-filter-value="مغامرة">مغامرة</span>
+            </div>
+
+        </div>
+
+
+        <div class="filter-section">
+            <h3>تاريخ النشر</h3>
+            <div class="filter-tags">
+                <span class="filter-tag" data-filter-value="current-year">السنة الحالية</span>
+                <span class="filter-tag" data-filter-value="1-year-ago">قبل سنة</span>
+
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <h3>ترتيب حسب</h3>
+            <div class="filter-tags">
+                <span class="filter-tag" data-filter-value="rating">التقييم</span>
+                <span class="filter-tag" data-filter-value="views">المشاهدات</span>
+                <span class="filter-tag" data-filter-value="likes">الإعجابات</span>
+            </div>
+        </div>
+
+        <div style="padding: 20px 0;">
+            <button class="apply-btn" id="applyFilterBtn">تطبيق الفلترة</button>
+            <button class="reset-btn-bottom" id="resetFilterBtn">إعادة تعيين</button>
+        </div>
+    </div>
+</div>
+
+
+<div id="searchOverlay" class="search-overlay">
+
+    <div class="search-header">
+
+        <div class="icons-left-search">
+             <i class="fas fa-sliders-h filter-icon-bar-top" onclick="openFilter()"></i>
+             <i class="fas fa-arrow-right close-search-btn" onclick="closeSearch()"></i>
+        </div>
+
+        <div class="search-title">البحث</div>
+
+    </div>
+
+    <div class="search-input-section">
+
+        <div class="search-input-wrapper">
+            <i class="fas fa-search" onclick="closeSearchAndApplyFilter()"></i>
+            <input type="text" placeholder="ابحث هنا" id="searchInput" oninput="liveSearchUpdate()">
+        </div>
+
+    </div>
+
+    <div class="search-results-container">
+
+        <div class="search-result-grid" id="searchResultGrid">
+            </div>
+
+        <p id="noResultsMessage">
+            لا يوجد نتائج مطابقة لـ "<span id="searchTextDisplay"></span>".
+        </p>
+
+    </div>
+
+</div>
+
+<div id="myOverlay" class="overlay"></div>
+
+
+<header class="top-header">
+
+    <div class="left-icons">
+        <i class="fas fa-search header-icon" id="search-toggle" onclick="openSearch()"></i>
+    </div>
+
+    <div class="title-container">
+        <div class="header-title">مانجا</div>
+    </div>
+
+    <div class="right-icons">
+        <a href="index.html" class="header-icon-link">
+             <i class="fas fa-arrow-right header-icon"></i>
+        </a>
+    </div>
+
+</header>
+
+<main class="movie-grid-container">
+    <div class="movie-grid" id="mainMovieGrid">
+
+        <a href="show_details.html?id=Demon-Slayer" class="movie-card"
+           data-id="Demon-Slayer"
+           data-title="Demon Slayer"
+           data-genres="فنون قتالية أكشن">
+            <img src="Manga_Files/Demon-Slayer/Demon_Slayer.png" alt="غلاف قاتل الشياطين">
+            <div class="card-overlay">
+                <div class="card-title">Demon Slayer</div>
+                <div class="card-classification">التصنيف :فنون قتالية - أكشن</div>
+            </div>
+        </a>
+        <a href="show_details.html?id=One-Piece" class="movie-card"
+           data-id="One-Piece"
+           data-title="One Piece"
+           data-genres="فنون قتالية أكشن">
+            <img src="Manga_Files/One-Piece/One_Piece.png" alt="One Piece">
+            <div class="card-overlay">
+                <div class="card-title">One Piece</div>
+                <div class="card-classification">التصنيف :فنون قتالية - أكشن</div>
+            </div>
+        </a>
+        <a href="show_details.html?id=Fruits-Basket" class="movie-card"
+           data-id="Fruits-Basket"
+           data-title="Fruits Basket"
+           data-genres="فنون قتالية موريم أكشن">
+            <img src="Manga_Files/Fruits-Basket/Fruits_Basket.png" alt="Fruits Basket">
+            <div class="card-overlay">
+                <div class="card-title">Fruits Basket</div>
+                <div class="card-classification">التصنيف :فنون قتالية -موريم - أكشن</div>
+            </div>
+        </a>
+
+        <a href="show_details.html?id=Kingdom" class="movie-card"
+           data-id="Kingdom"
+           data-title="Kingdom"
+           data-genres="غموض بوليسي مغامرة">
+            <img src="Manga_Files/Kingdom/Kingdom.png" alt="Kingdom">
+            <div class="card-overlay">
+                <div class="card-title">Kingdom</div>
+                <div class="card-classification">التصنيف :غموض - بوليسي - مغامرة</div>
+            </div>
+        </a>
+
+        <a href="show_details.html?id=Monster" class="movie-card"
+           data-id="Monster"
+           data-title="Monster"
+           data-genres="دراما موسيقى من الحياة">
+            <img src="Manga_Files/Monster/Monster.png" alt="Monster">
+            <div class="card-overlay">
+                <div class="card-title">Monster</div>
+                <div class="card-classification">التصنيف :دراما - موسيقى - شريحة من الحياة</div>
+            </div>
+        </a>
+
+        <a href="show_details.html?id=Haikyuu" class="movie-card"
+           data-id="Haikyuu"
+           data-title="Haikyuu"
+           data-genres="رعب نفسي تاريخي">
+            <img src="Manga_Files/Haikyuu/Haikyuu.png" alt="Haikyuu">
+            <div class="card-overlay">
+                <div class="card-title">Haikyuu</div>
+                <div class="card-classification">التصنيف :رعب - نفسي - تاريخي</div>
+            </div>
+        </a>
+
+        <a href="show_details.html?id=Vagabond" class="movie-card"
+           data-id="Vagabond"
+           data-title="Vagabond"
+           data-genres="أكشن خيال علمي">
+            <img src="Manga_Files/Vagabond/Vagabond.png" alt="Vagabond">
+            <div class="card-overlay">
+                <div class="card-title">Vagabond</div>
+                <div class="card-classification">التصنيف :أكشن - خيال علمي - عسكري</div>
+            </div>
+        </a>
+
+        <a href="show_details.html?id=Naruto" class="movie-card"
+           data-id="Naruto"
+           data-title="Naruto"
+           data-genres="أكشن خارق للطبيعة مدرسي">
+            <img src="Manga_Files/Naruto/Naruto.png" alt="Naruto">
+            <div class="card-overlay">
+                <div class="card-title">Naruto</div>
+                <div class="card-classification">التصنيف :أكشن - خارق للطبيعة - مدرسي</div>
+            </div>
+        </a>
+
+        <a href="show_details.html?id=Berserk" class="movie-card"
+           data-id="Berserk"
+           data-title="Berserk"
+           data-genres="دراما تاريخي رومانسي">
+            <img src="Manga_Files/Berserk/Berserk.png" alt="Berserk">
+            <div class="card-overlay">
+                <div class="card-title">Berserk</div>
+                <div class="card-classification">التصنيف :دراما - تاريخي - رومانسي</div>
+            </div>
+        </a>
+
+        <a href="show_details.html?id=Attack-on-Titan" class="movie-card"
+           data-id="Attack-on-Titan"
+           data-title="Attack on Titan"
+           data-genres="أكشن فانتازيا دراما">
+            <img src="Manga_Files/Attack-on-Titan/Attack_on_Titan.png" alt="Attack on Titan">
+            <div class="card-overlay">
+                <div class="card-title">Attack on Titan</div>
+                <div class="card-classification">التصنيف :أكشن - فانتازيا - دراما</div>
+            </div>
+        </a>
+
+        <a href="show_details.html?id=Vinland-Saga" class="movie-card"
+           data-id="Vinland-Saga"
+           data-title="Vinland Saga"
+           data-genres="رياضي أكشن مدرسي">
+            <img src="Manga_Files/Vinland-Saga/Vinland_Saga.png" alt="Vinland Saga">
+            <div class="card-overlay">
+                <div class="card-title">Vinland Saga</div>
+                <div class="card-classification">التصنيف :رياضي - أكشن - مدرسي</div>
+            </div>
+        </a>
+
+        <a href="show_details.html?id=Dragon-Ball" class="movie-card"
+           data-id="Dragon-Ball"
+           data-title="Dragon Ball"
+           data-genres="أكشن خيال تاريخي">
+            <img src="Manga_Files/Dragon-Ball/Dragon_Ball.png" alt="Dragon Ball">
+            <div class="card-overlay">
+                <div class="card-title">Dragon Ball</div>
+                <div class="card-classification">التصنيف :أكشن - خيال - تاريخي</div>
+            </div>
+        </a>
+
+        <a href="show_details.html?id=Kimi-ni-Todoke" class="movie-card"
+           data-id="Kimi-ni-Todoke"
+           data-title="Kimi ni Todoke"
+           data-genres="دراما موسيقى من الحياة">
+            <img src="Manga_Files/Kimi-ni-Todoke/Kimi_ni_Todoke.png" alt="Kimi ni Todoke">
+            <div class="card-overlay">
+                <div class="card-title">Kimi ni Todoke</div>
+                <div class="card-classification">التصنيف :دراما - موسيقى - شريحة من الحياة</div>
+            </div>
+        </a>
+   <a href="show_details.html?id=Slam-Dunk" class="movie-card"
+           data-id="Slam-Dunk"
+           data-title="Slam Dunk"
+           data-genres="دراما موسيقى من الحياة">
+            <img src="Manga_Files/Slam-Dunk/Slam_Dunk.png" alt="Slam Dunk">
+            <div class="card-overlay">
+                <div class="card-title">Slam Dunk</div>
+                <div class="card-classification">التصنيف :دراما - موسيقى - شريحة من الحياة</div>
+            </div>
+        </a>
+    </div>
+</main>
+
+
+
+    <div class="bottom-nav">
+      <a href="Comic.html"><i class="fas fa-comment-dots"></i>كوميك</a>
+      <a href="manhua.html"><i class="fas fa-scroll"></i>المانهوا</a>
+      <a href="manga.html" class="active"><i class="fas fa-book-open"></i>المانجا</a>
+<a href="news.html"><i class="fas fa-fire"></i>آخر التحديثات</a>
+
+      <a href="index.html" ><i class="fas fa-home"></i>الرئيسية</a>
+    </div>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const urlParams = new URLSearchParams(window.location.search);
+
+        const genreFromURL = urlParams.get('genre');
+
+        if (genreFromURL) {
+
+            const decodedGenre = decodeURIComponent(genreFromURL);
+
+            const tagToSelect = document.querySelector(`#genre-tags .filter-tag[data-filter-value="${decodedGenre}"]`);
+
+            if (tagToSelect) {
+                tagToSelect.classList.add('selected');
+            }
+        }
+
+        applySearchAndFilter();
+    });
+
+
+    const searchOverlay = document.getElementById("searchOverlay");
+    const filterSidebar = document.getElementById("filterSidebar");
+    const searchInput = document.getElementById("searchInput");
+    const filterTags = document.querySelectorAll('.filter-tag');
+    const applyFilterBtn = document.getElementById('applyFilterBtn');
+    const resetFilterBtn = document.getElementById('resetFilterBtn');
+    const mainMovieCards = document.querySelectorAll('#mainMovieGrid .movie-card');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const mainMovieGrid = document.getElementById('mainMovieGrid');
+
+
+    function openSearch() {
+        searchOverlay.classList.add("active");
+        searchInput.focus();
+    }
+
+    function closeSearch() {
+        searchOverlay.classList.remove("active");
+        noResultsMessage.style.display = 'none';
+    }
+
+    function openFilter() {
+        filterSidebar.classList.add("active");
+    }
+
+    function closeFilter() {
+        filterSidebar.classList.remove("active");
+    }
+
+    function applySearchAndFilter() {
+        const searchText = searchInput.value.trim().toLowerCase();
+
+        const selectedGenres = Array.from(document.querySelectorAll('#genre-tags .filter-tag.selected'))
+                                    .map(tag => tag.getAttribute('data-filter-value').toLowerCase().trim());
+
+        let resultsFound = 0;
+
+        mainMovieCards.forEach(card => {
+            const cardTitle = card.getAttribute('data-title') ? card.getAttribute('data-title').toLowerCase() : '';
+            const cardGenresAttribute = card.getAttribute('data-genres') || '';
+            const cardGenres = cardGenresAttribute.toLowerCase().split(' ').filter(g => g.trim() !== '');
+
+            let matchesSearch = true;
+            let matchesFilter = true;
+
+            if (searchText !== '' && !cardTitle.includes(searchText)) {
+                matchesSearch = false;
+            }
+
+            if (selectedGenres.length > 0) {
+                matchesFilter = selectedGenres.every(selectedGenre =>
+                    cardGenres.includes(selectedGenre) || cardGenres.some(g => g.includes(selectedGenre))
+                );
+            }
+
+            if (matchesSearch && matchesFilter) {
+                card.style.display = 'block';
+                resultsFound++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        if (resultsFound === 0) {
+             noResultsMessage.style.display = 'block';
+             document.getElementById('searchTextDisplay').textContent = searchText;
+             mainMovieGrid.style.display = 'none';
+
+        } else {
+            noResultsMessage.style.display = 'none';
+            mainMovieGrid.style.display = 'grid';
+        }
+    }
+
+    function closeSearchAndApplyFilter() {
+        applySearchAndFilter();
+        closeFilter();
+        closeSearch();
+    }
+
+    function liveSearchUpdate() {
+        const searchText = searchInput.value.trim().toLowerCase();
+
+        let resultsFound = 0;
+
+        const selectedGenres = Array.from(document.querySelectorAll('#genre-tags .filter-tag.selected'))
+                                    .map(tag => tag.getAttribute('data-filter-value').toLowerCase().trim());
+
+        mainMovieCards.forEach(card => {
+            const cardTitle = card.getAttribute('data-title') ? card.getAttribute('data-title').toLowerCase() : '';
+            const cardGenresAttribute = card.getAttribute('data-genres') || '';
+            const cardGenres = cardGenresAttribute.toLowerCase().split(' ').filter(g => g.trim() !== '');
+
+            let matchesSearch = true;
+            let matchesFilter = true;
+
+            if (searchText === '' || cardTitle.includes(searchText)) {
+                matchesSearch = true;
+            } else {
+                matchesSearch = false;
+            }
+
+            if (selectedGenres.length > 0) {
+                matchesFilter = selectedGenres.every(selectedGenre =>
+                    cardGenres.includes(selectedGenre) || cardGenres.some(g => g.includes(selectedGenre))
+                );
+            }
+
+            if (matchesSearch && matchesFilter) {
+                card.style.display = 'block';
+                resultsFound++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        if (resultsFound === 0) {
+             noResultsMessage.style.display = 'block';
+             document.getElementById('searchTextDisplay').textContent = searchText;
+             mainMovieGrid.style.display = 'none';
+        } else {
+            noResultsMessage.style.display = 'none';
+            mainMovieGrid.style.display = 'grid';
+        }
+
+    }
+
+    function resetFilter() {
+        filterTags.forEach(tag => tag.classList.remove('selected'));
+        searchInput.value = '';
+        applySearchAndFilter();
+        closeFilter();
+    }
+
+    filterTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+            this.classList.toggle('selected');
+            if (filterSidebar.classList.contains('active')) {
+                 applySearchAndFilter();
+            }
+        });
+    });
+
+    applyFilterBtn.addEventListener('click', closeSearchAndApplyFilter);
+
+    resetFilterBtn.addEventListener('click', resetFilter);
+
+    document.querySelector('.search-input-wrapper i.fa-search').addEventListener('click', closeSearchAndApplyFilter);
+    searchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            closeSearchAndApplyFilter();
+        }
+    });
+
+    searchInput.addEventListener('input', liveSearchUpdate);
+
+</script>
+
+</body>
+</html>
